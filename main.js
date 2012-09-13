@@ -75,8 +75,8 @@ function(tree, traverse, parsejs) {
 				hlLine = editor.setLineClass(
 					editor.getCursor().line,
 					null,
-					"activeline
-				");
+					"activeline"
+				);
 			};
 
 			var editor = CodeMirror.fromTextArea(
