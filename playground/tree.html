@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>AlgoView</title>
+	<link rel="stylesheet" href="../third-party/codemirror/lib/codemirror.css">
+	<link rel="stylesheet" href="tree.css">
+
+	<script src="../third-party/jquery.js"></script>
+	<script src="../third-party/codemirror/lib/codemirror.js"></script>
+
+	<!-- <CodeMirror Plugins> -->
+	<script src="../third-party/codemirror/lib/util/simple-hint.js"></script>
+	<link rel="stylesheet" href="../third-party/codemirror/lib/util/simple-hint.css">
+	<script src="../third-party/codemirror/lib/util/javascript-hint.js"></script>
+
+	<script src="../third-party/codemirror/lib/util/foldcode.js"></script>
+	<!-- </CodeMirror Plugins> -->
+
+	<script src="../third-party/codemirror/mode/javascript/javascript.js"></script>
+	<script data-main="tree" src="../third-party/treehugger/lib/require.js"></script>
+</head>
+<body>
+	<div id="mainContainer">
+		<div class="float-wrap">
+			<div>
+				<textarea id="mainEditor">var graph = [
+	[1, 2],
+	[3, 4],
+	[],
+	[5],
+	[],
+	[]
+];
+function depthFirstSearch(n, graph, resultArray) {
+	var eds = graph[n];
+	if (eds.length > 0) {
+		for (var i = 0; i < eds.length; i++) {
+			var childIndex = eds[i];
+			resultArray.push(childIndex);
+			depthFirstSearch(childIndex, graph, resultArray);
+		}
+	}
+}</textarea>
+			</div>
+			<div>
+				<textarea id="astEditor"></textarea>
+			</div>
+		</div>
+		<div class="float-wrap">
+			<div>
+				<button id="runButton">Run</button>
+				<textarea id="analysisEditor">log(ast.collectTopDown(
+	"For(_)"
+));</textarea>
+			</div>
+			<div>
+				<textarea id="output"></textarea>
+			</div>
+		</div>
+	</div>
+</body>
+</html>

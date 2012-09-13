@@ -1,0 +1,36 @@
+.CodeMirror, .CodeMirror-scroll {
+	height: inherit;
+}
+.activeline {
+	background: #e8f2ff !important;
+}
+
+textarea {
+	height: 99%;
+	width: 99%;
+	resize: none;
+}
+
+#mainContainer {
+	width: 86%;
+	height: 90%;
+	margin: 49px auto;
+}
+
+.float-wrap {
+	height: 300px;
+}
+
+.float-wrap > div {
+	position: relative;
+	height: 100%;
+	width: 49%;
+	float: left;
+	border: solid 1px;
+}
+
+#runButton {
+	position: absolute;
+	right: 0px;
+	z-index: 1;
+}
