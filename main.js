@@ -20,7 +20,9 @@ function(tree, traverse, parsejs) {
 	algoView.prototype = {
 		initView: function() {
 			var self = this;
-			var foldFunc = CodeMirror.newFoldFunction(CodeMirror.braceRangeFinder);
+			var foldFunc = CodeMirror.newFoldFunction(
+				CodeMirror.braceRangeFinder
+			);
 
 			var mainConfig = {
 				lineNumbers: true,
@@ -70,7 +72,11 @@ function(tree, traverse, parsejs) {
 			config.indentWithTabs = true;
 			config.onCursorActivity = function() {
 				editor.setLineClass(hlLine, null, null);
-				hlLine = editor.setLineClass(editor.getCursor().line, null, "activeline");
+				hlLine = editor.setLineClass(
+					editor.getCursor().line,
+					null,
+					"activeline
+				");
 			};
 
 			var editor = CodeMirror.fromTextArea(
@@ -129,8 +135,14 @@ function(tree, traverse, parsejs) {
 				);
 				data.inputArgs = args;
 /*				if (self.allArgumentsFilledByUser(args)) {
-					var codeToExecute = self.plantMonitors(self.mainEditor, functionNode);
-					data.executionData = self.mockAndExecuteClientCode(self.mainEditor, functionNode);
+					var codeToExecute = self.plantMonitors(
+						self.mainEditor,
+						functionNode
+					);
+					data.executionData = self.mockAndExecuteClientCode(
+						self.mainEditor,
+						functionNode
+					);
 				}*/
 			}
 			return data;
