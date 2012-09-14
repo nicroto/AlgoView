@@ -134,7 +134,7 @@ function(tree, traverse, parsejs) {
 					funcNode
 				);
 				data.inputArgs = args;
-				if (self.allArgumentsFilledByUser(args)) {
+				if (self.allArgumentsFilledByUser(args)) {/*
 					var codeToExecute = self.plantMonitors(
 						self.mainEditor.getValue("\n").split("\n"),
 						funcNode
@@ -142,7 +142,7 @@ function(tree, traverse, parsejs) {
 					data.executionData = self.mockAndExecuteClientCode(
 						self.mainEditor,
 						funcNode
-					);
+					);*/
 				}
 			}
 			return data;
