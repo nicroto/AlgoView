@@ -20,26 +20,30 @@
 	<script data-main="tree" src="../third-party/treehugger/lib/require.js"></script>
 </head>
 <body>
+	<a href="/">AlgoView</a>
 	<div id="mainContainer">
 		<div class="float-wrap">
 			<div>
-				<textarea id="mainEditor">var graph = [
-	[1, 2],
-	[3, 4],
-	[],
-	[5],
-	[],
-	[]
-];
-function depthFirstSearch(n, graph, resultArray) {
-	var eds = graph[n];
-	if (eds.length > 0) {
-		for (var i = 0; i < eds.length; i++) {
-			var childIndex = eds[i];
-			resultArray.push(childIndex);
-			depthFirstSearch(childIndex, graph, resultArray);
+				<textarea id="mainEditor">function binarySearch (key, array) {
+	var low = 0;
+	var high = array.length - 1;
+	var mid, value;
+	var test = 0;
+
+	while (low <= high) {
+		test++;
+		mid = floor((low + high) / 2);
+		value = array[mid];
+
+		if (value < key) {
+			low = mid + 1;
+		} else if (value > key) {
+			high = mid - 1;
+		} else {
+			return mid;
 		}
 	}
+	return -1;
 }</textarea>
 			</div>
 			<div>
@@ -49,9 +53,24 @@ function depthFirstSearch(n, graph, resultArray) {
 		<div class="float-wrap">
 			<div>
 				<button id="runButton">Run</button>
-				<textarea id="analysisEditor">log(ast.collectTopDown(
-	"For(_)"
-));</textarea>
+				<textarea id="analysisEditor">$(".marked").removeClass("marked");
+var query = 'Assign(_, _)';
+ast.collectTopDown(
+	query
+).log();
+log("=================");
+ast.traverseTopDown(
+	query,
+    function(b, node) {
+        var pos = node.getPos();
+        log(JSON.stringify(pos));
+        editor.markText(
+          {line: pos.sl, ch: pos.sc},
+          {line: pos.el, ch: pos.ec},
+          "marked"
+        );
+    }
+);</textarea>
 			</div>
 			<div>
 				<textarea id="output"></textarea>

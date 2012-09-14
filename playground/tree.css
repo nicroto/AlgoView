@@ -14,7 +14,7 @@ textarea {
 #mainContainer {
 	width: 86%;
 	height: 90%;
-	margin: 49px auto;
+	margin: 39px auto;
 }
 
 .float-wrap {
@@ -33,4 +33,8 @@ textarea {
 	position: absolute;
 	right: 0px;
 	z-index: 1;
+}
+
+.marked {
+	background-color: yellow;
 }

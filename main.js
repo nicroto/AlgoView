@@ -127,25 +127,38 @@ function(tree, traverse, parsejs) {
 				inputArgs: null,
 				executionData: null
 			};
-			var functionNode = self.getMainFunctionNode(ast);
-			if (functionNode) {
+			var funcNode = self.getMainFunctionNode(ast);
+			if (funcNode) {
 				var args = self.getArgumentsForInput(
 					self.parseInputArgs(self.inputEditor.getValue()),
-					functionNode
+					funcNode
 				);
 				data.inputArgs = args;
-/*				if (self.allArgumentsFilledByUser(args)) {
+				if (self.allArgumentsFilledByUser(args)) {
 					var codeToExecute = self.plantMonitors(
-						self.mainEditor,
-						functionNode
+						self.mainEditor.getValue("\n").split("\n"),
+						funcNode
 					);
 					data.executionData = self.mockAndExecuteClientCode(
 						self.mainEditor,
-						functionNode
+						funcNode
 					);
-				}*/
+				}
 			}
 			return data;
+		},
+
+		plantMonitors: function(lines, funcNode) {
+			
+		},
+
+		allArgumentsFilledByUser: function(args) {
+			for (var i; i < args.length; i++) {
+				if (!args[i].isUserSet) {
+					return false;
+				}
+			}
+			return true;
 		},
 
 		getMainFunctionNode: function(ast) {
@@ -159,10 +172,10 @@ function(tree, traverse, parsejs) {
 			return (functions.length > 0) ? functions[0] : null;
 		},
 
-		getArgumentsForInput: function(currentArgs, functionNode) {
+		getArgumentsForInput: function(currentArgs, funcNode) {
 			var self = this;
 			var result = [];
-			var argNodes = functionNode[1].toArray();
+			var argNodes = funcNode[1].toArray();
 			var argNames = [];
 			for (var i = 0; i < argNodes.length; i++) {
 				argNames.push(argNodes[i][0].value);

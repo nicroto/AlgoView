@@ -5,26 +5,36 @@ require({ baseUrl: "../third-party/treehugger/lib" }, [
 "jquery"],
 function(tree, traverse, parsejs) {
 
+	function clearLog() {
+		outputEditor.setValue("");
+	}
+
 	function log(message) {
-		$("#output").val($("#output").val() + message + "\n");
+		outputEditor.setValue(outputEditor.getValue() + message + "\n");
+		outputEditor.setCursor({
+			line: outputEditor.lineCount() - 1,
+			ch: 0
+		});
 	}
 
 	function exec() {
 		var js = mainEditor.getValue();
 		var analysisJs = analysisEditor.getValue();
-		$("#output").val("");
+		clearLog();
 		var ast = parsejs.parse(js);
 		astEditor.setValue(ast.toPrettyString());
 		try {
 			eval(analysisJs);
 		} catch(e) {
-			$("#output").val("JS Error");
+			clearLog();
+			log("JS Error");
 			console.log(e.message)
 		}
 	}
 
 	tree.Node.prototype.log = function() {
-		$("#output").val(this.toPrettyString());
+		clearLog();
+		log(this.toPrettyString());
 	}
 
 	function initEditor(elementId, config) {
@@ -45,7 +55,7 @@ function(tree, traverse, parsejs) {
 		return editor;
 	}
 
-	var mainEditor, astEditor, analysisEditor;
+	var mainEditor, astEditor, analysisEditor, outputEditor;
 
 	require.ready(function() {
 		CodeMirror.commands.autocomplete = function(cm) {
@@ -71,8 +81,11 @@ function(tree, traverse, parsejs) {
 		}, baseConfig);
 
 		analysisEditor = initEditor("analysisEditor", baseConfig);
-		mainEditor = initEditor("mainEditor", parseTriggeringConfig);
+		window.editor = mainEditor = initEditor("mainEditor", parseTriggeringConfig);
 		astEditor = initEditor("astEditor", {
+			readOnly: true
+		});
+		outputEditor = initEditor("output", {
 			readOnly: true
 		});
 
