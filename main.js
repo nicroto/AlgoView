@@ -136,7 +136,7 @@ function(tree, traverse, parsejs) {
 				data.inputArgs = args;
 				if (self.allArgumentsFilledByUser(args)) {/*
 					var codeToExecute = self.plantMonitors(
-						self.mainEditor.getValue("\n").split("\n"),
+						self.mainEditor.getValue("\n"),
 						funcNode
 					);
 					data.executionData = self.mockAndExecuteClientCode(
@@ -148,7 +148,34 @@ function(tree, traverse, parsejs) {
 			return data;
 		},
 
-		plantMonitors: function(lines, funcNode) {
+		plantMonitors: function(code, funcNode) {
+			var lines = code.split("\n");
+			var self = this;
+			lines = $.map(lines, function(index, line) {
+				return { index: index, text: line, toInsert: [] };
+			});
+			var monitors = self.getAllVarDecls(funcNode)
+				.concat(self.getAllAssigns(funcNode))
+				.concat(self.getAllLoops(funcNode));
+			for (var i = 0; i < monitors.length; i++) {
+				var entry = monitors[i];
+				lines[entry.index].toInsert.push(entry.text);
+			}
+			var newLines = [];
+			for (var i = 0; i < lines.length; i++) {
+				var line = lines[i];
+				newLines.push(line.text);
+				var toInsert = line.toInsert;
+				if (toInsert.length > 0) {
+					for(var j = 0; j < toInsert.length; j++) {
+						newLines.push(toInsert[j].text);
+					}
+				}
+			}
+			return newLines.join("\n");
+		},
+
+		getAllVarDecls: function(funcNode) {
 			
 		},
 

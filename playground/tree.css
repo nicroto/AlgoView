@@ -31,10 +31,22 @@ textarea {
 
 #runButton {
 	position: absolute;
-	right: 0px;
+	right: 17px;
 	z-index: 1;
 }
 
 .marked {
-	background-color: yellow;
+	background-color: yellow !important;
+}
+
+.decl {
+	background-color: #E2C7D8;
+}
+
+.declInit {
+	background-color: #D0E4D0;
+}
+
+.loop {
+	background-color: #C8FFC8;
 }

@@ -5,6 +5,51 @@ require({ baseUrl: "../third-party/treehugger/lib" }, [
 "jquery"],
 function(tree, traverse, parsejs) {
 
+	var analysisHelpers = {
+		cssClasses: {
+			'VarDecl(_)': "decl",
+			'For(_,_,_,_)': "loop",
+			'VarDeclInit(_,_)': "declInit",
+			'While(_,_)': "loop"
+		},
+
+		clearHighLight: function() {
+			silentUpdate = true;
+			var cursorPos = mainEditor.getCursor();
+			mainEditor.setValue(mainEditor.getValue());
+			mainEditor.setCursor(cursorPos);
+			silentUpdate = false;
+		},
+
+		printQuery: function(ast, query) {
+			log("========= " + query + " ========");
+			ast.collectTopDown(
+				query
+			).log();
+		},
+
+		highLightQuery: function(ast, query) {
+			var classes = analysisHelpers.cssClasses;
+			ast.traverseTopDown(
+				query,
+				function(b, node) {
+					var pos = node.getPos();
+					log("highlight: " + JSON.stringify(pos));
+					editor.markText(
+						{line: pos.sl, ch: pos.sc},
+						{line: pos.el, ch: pos.ec},
+						(classes[query]) ? classes[query] : "marked"
+					);
+				}
+			);
+		},
+
+		checkQuery: function(ast, query, cssClass) {
+			analysisHelpers.printQuery(ast, query);
+			analysisHelpers.highLightQuery(ast, query, cssClass);
+		}
+	}
+
 	function clearLog() {
 		outputEditor.setValue("");
 	}
@@ -24,7 +69,15 @@ function(tree, traverse, parsejs) {
 		var ast = parsejs.parse(js);
 		astEditor.setValue(ast.toPrettyString());
 		try {
-			eval(analysisJs);
+			// create closure in which to enable access to helpers
+			(function (helpers) {
+				// expand helpers
+				for (var i in helpers) {
+					eval("var " + i + " = " + "helpers." + i + ";");
+				}
+				clearHighLight();
+				eval(analysisJs);
+			})(analysisHelpers);
 		} catch(e) {
 			clearLog();
 			log("JS Error");
@@ -33,7 +86,6 @@ function(tree, traverse, parsejs) {
 	}
 
 	tree.Node.prototype.log = function() {
-		clearLog();
 		log(this.toPrettyString());
 	}
 
@@ -56,6 +108,7 @@ function(tree, traverse, parsejs) {
 	}
 
 	var mainEditor, astEditor, analysisEditor, outputEditor;
+	var silentUpdate = false;
 
 	require.ready(function() {
 		CodeMirror.commands.autocomplete = function(cm) {
@@ -76,7 +129,9 @@ function(tree, traverse, parsejs) {
 		// which will trigger parsing
 		var parseTriggeringConfig = $.extend({
 			onChange: function() {
-				exec();
+				if (!silentUpdate) {
+					exec();
+				}
 			}
 		}, baseConfig);
 
