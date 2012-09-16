@@ -16,3 +16,6 @@ AlgoView is implemented using CodeMirror code editor, TreeHugger.js, jQuery and 
 
 ### What is the plan?
 While I am not sure how much I will be able to take this project, I am sure that I want all the listed above features and will work on implementing them.
+
+### Demo?
+Here is link to an [AlgoView demo](http://nicroto.github.com/AlgoView/).
