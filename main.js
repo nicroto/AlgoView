@@ -15,7 +15,7 @@ function(tree, traverse, parsejs) {
 
 		toString: function(tab) {
 			var value = this.value;
-			return (tab) ? tab + value : value;
+			return (tab !== undefined) ? tab + value : value;
 		}
 	});
 
@@ -52,7 +52,7 @@ function(tree, traverse, parsejs) {
 		},
 
 		toString: function(tab) {
-			tab = (tab) ? tab + "	" : "";
+			tab = (tab !== undefined) ? tab + "\t" : "";
 			var items = this.items;
 			var lines = [];
 			for (var i = 0; i < items.length; i++) {
@@ -69,11 +69,65 @@ function(tree, traverse, parsejs) {
 		}
 	});
 
+	var InLoopVar = Terminal.extend({
+		init: function(loop, iteration, varName, value) {
+			var self = this;
+			self.loop = loop;
+			self.states = {};
+			self.name = varName;
+			self.addState(iteration, value);
+		},
+
+		addState: function(iteration, value) {
+			this.states[iteration] = value;
+		},
+
+		toString: function(tab) {
+			var self = this;
+			var iterations = self.loop.iteration + 1;
+			var states = self.states;
+			var varName = self.name;
+			var parts = [tab + varName + " "];
+			for (var i = 0; i < iterations; i++) {
+				var part = (states[i] !== undefined) ? states[i] : "n/a";
+				parts.push(part);
+			}
+			return parts.join("\t|\t");
+		}
+	});
+
 	var Loop = Block.extend({
 		init: function(funcScope) {
 			var self = this;
 			self._super();
 			self.funcScope = funcScope;
+			self.iteration = -1;
+		},
+
+		addVarDeclare: function(varName, value) {
+			this.addInLoopVar(varName, value);
+		},
+
+		addVarAlter: function(varName, value) {
+			this.addInLoopVar(varName, value);
+		},
+
+		addInLoopVar: function(varName, value) {
+			var self = this;
+			var items = self.items;
+			var iteration = self.iteration;
+			for (var i = 0; i < items.length; i++) {
+				var item = items[i];
+				if (item.name === varName) {
+					item.addState(iteration, value);
+					return;
+				}
+			}
+			items.push(new InLoopVar(self, iteration, varName, value));
+		},
+
+		startLoopIteration: function() {
+			this.iteration += 1;
 		}
 	});
 
@@ -105,6 +159,11 @@ function(tree, traverse, parsejs) {
 			var loopBlock = new Loop(funcScope);
 			parentBlock.addBlock(loopBlock);
 			self.setBlock(loopBlock);
+		},
+
+		trackLoopIteration: function() {
+			var loop = this.getBlock();
+			loop.startLoopIteration();
 		},
 
 		trackEndLoop: function() {
@@ -148,7 +207,7 @@ function(tree, traverse, parsejs) {
 
 		generateData: function() {
 			var root = this.root;
-			return (root) ? root.toString() : "";
+			return (root) ? root.toString(" ") : "";
 		}
 	});
 
@@ -207,7 +266,9 @@ function(tree, traverse, parsejs) {
 				self.element,
 				"algo-view"
 			);
-
+			$("#clearButton", self.element).click(function() {
+				self.clearEditors();
+			})
 			self.refresh();
 		},
 
@@ -245,6 +306,13 @@ function(tree, traverse, parsejs) {
 			self.cleanState();
 		},
 
+		clearEditors: function() {
+			var self = this;
+			self.mainEditor.setValue("");
+			self.inputEditor.setValue("");
+			self.algoViewEditor.setValue("");
+		},
+
 		cleanState: function() {
 			this.uniqueIDIndex = 0;
 		},
@@ -276,7 +344,7 @@ function(tree, traverse, parsejs) {
 		processAst: function(ast) {
 			var self = this;
 			var data = {
-				inputArgs: null,
+				inputArgs: [],
 				executionData: null
 			};
 			var funcNode = self.getMainFunctionNode(ast);
@@ -432,6 +500,11 @@ function(tree, traverse, parsejs) {
 					line: startLine,
 					insertAt: "previousLine",
 					text: "executionObserver.trackStartLoop();"
+				});
+				monitors.push({
+					line: startLine,
+					insertAt: "nextLine",
+					text: "executionObserver.trackLoopIteration();"
 				});
 				monitors.push({
 					line: endLine,
