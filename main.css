@@ -29,6 +29,12 @@ textarea {
 	border: solid 1px;
 }
 
+#clearButton {
+	position: absolute;
+	right: 17px;
+	z-index: 1;
+}
+
 .sample-input-editor {
 	height: 52px;
 }
