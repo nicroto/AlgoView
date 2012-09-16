@@ -121,9 +121,12 @@ function(tree, traverse, parsejs) {
 			onGutterClick: foldFunc,
 			extraKeys: {
 				"Ctrl-Space": "autocomplete",
+				"Ctrl-B": function() {
+					exec();
+				},
 				"Shift-Ctrl-C": function(cm){
 					foldFunc(cm, cm.getCursor().line);
-				}
+				},
 			}
 		};
 		// configuration for the editors

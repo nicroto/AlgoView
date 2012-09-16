@@ -16,6 +16,7 @@
 	<script data-main="main" src="third-party/treehugger/lib/require.js"></script>
 </head>
 <body>
+	<a href="playground/tree.html">TreeHugger Playground</a>
 	<div id="algoViewContainer">
 		<div class="float-wrap">
 			<div class="main-editor">
@@ -26,7 +27,7 @@
 
 	while (low <= high) {
 
-		var mid = floor((low + high) / 2);
+		var mid = Math.floor((low + high) / 2);
 		var value = array[mid];
 
 		if (value < key) {
@@ -53,6 +54,5 @@
 			</div>
 		</div>
 	</div>
-	<a href="playground/tree.html">TreeHugger Playground</a>
 </body>
 </html>
