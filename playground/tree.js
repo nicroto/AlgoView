@@ -10,7 +10,8 @@ function(tree, traverse, parsejs) {
 			'VarDecl(_)': "decl",
 			'For(_,_,_,_)': "loop",
 			'VarDeclInit(_,_)': "declInit",
-			'While(_,_)': "loop"
+			'While(_,_)': "loop",
+			'ForIn(_,_,_)': "loop"
 		},
 
 		clearHighLight: function() {
