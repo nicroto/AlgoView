@@ -8,43 +8,163 @@ function(tree, traverse, parsejs) {
 	// varName = anything
 	var REGEX_INPUT_ARGS = /([a-zA-Z][a-zA-Z0-9]*)[\s]*=[\s]*(.*)/g;
 
-	function algoViewProxy() {
-	}
-	algoViewProxy.prototype = {
+	var Terminal = Class.extend({
+		init: function(value) {
+			this.value = value;
+		},
+
+		toString: function(tab) {
+			var value = this.value;
+			return (tab) ? tab + value : value;
+		}
+	});
+
+	var Block = Terminal.extend({
+		init: function() {
+			var self = this;
+			self.parent = null;
+			self.items = [];
+		},
+
+		addBlock: function(item) {
+			var self = this;
+			var items = self.items;
+			if (items.indexOf(item) === -1) {
+				items.push(item);
+				item.parent = self;
+			}
+		},
+
+		addVarDeclare: function(varName, value) {
+			this.items.push(
+				new Terminal(varName + " = " + eval(value))
+			);
+		},
+
+		addVarAlter: function(varName, value) {
+			this.addVarDeclare(varName, value);
+		},
+
+		addReturn: function(value) {
+			this.items.push(
+				new Terminal("return " + eval(value))
+			);
+		},
+
+		toString: function(tab) {
+			tab = (tab) ? tab + "	" : "";
+			var items = this.items;
+			var lines = [];
+			for (var i = 0; i < items.length; i++) {
+				lines.push(items[i].toString(tab));
+			}
+			return lines.join("\n");
+		}
+	});
+
+	var Func = Block.extend({
+		init: function() {
+			this._super();
+
+		}
+	});
+
+	var Loop = Block.extend({
+		init: function(funcScope) {
+			var self = this;
+			self._super();
+			self.funcScope = funcScope;
+		}
+	});
+
+	var ExecutionObserver = Class.extend({
+
+		init: function() {
+			var self = this;
+			self.root = null;
+			self.funcScope = null;
+			self.block = null;
+		},
 
 		trackVariableDeclaration: function(varName, value) {
-			console.log("Var is declared: '" + varName + "' = " + value);
+			var block = this.getBlock();
+			block.addVarDeclare(varName, value);
 		},
 
 		trackVariableAlter: function(varName, value) {
-			console.log("Var is altered: '" + varName + "' = " + value);
+			var block = this.getBlock();
+			block.addVarAlter(varName, value);
 		},
 
 		trackStartLoop: function() {
-			console.log("StartLoop");
+			var self = this;
+			var funcScope = self.getFuncScope();
+			var parentBlock = self.getBlock();
+			// init with func scope so it knows
+			// where to reg new variables (func scope)
+			var loopBlock = new Loop(funcScope);
+			parentBlock.addBlock(loopBlock);
+			self.setBlock(loopBlock);
 		},
 
 		trackEndLoop: function() {
-			console.log("EndLoop");
+			var self = this;
+			var parentBlock = self.getBlock().parent;
+			// end of a loop means that
+			// we should select the parent block
+			// as current block
+			self.setBlock(parentBlock);
 		},
 
 		trackReturn: function(value) {
-			console.log("Returned value: " + value);
+			var block = this.getBlock();
+			block.addReturn(value);
+		},
+
+		getBlock: function() {
+			var self = this;
+			if (!self.block) {
+				self.initRoot();
+			}
+			return self.block;
+		},
+
+		getFuncScope: function() {
+			var self = this;
+			if (!self.funcScope) {
+				self.initRoot();
+			}
+			return self.funcScope;
+		},
+
+		initRoot: function() {
+			var self = this;
+			self.root = self.funcScope = self.block = new Func();
+		},
+
+		setBlock: function(block) {
+			this.block = block;
+		},
+
+		generateData: function() {
+			var root = this.root;
+			return (root) ? root.toString() : "";
 		}
-	}
+	});
 
+	var AlgoView = Class.extend({
 
-	function algoView(element, parser) {
-		var self = this;
-		self.element = element;
-		self.parser = parser;
-		self.mainEditor = null;
-		self.inputEditor = null;
-		self.algoViewEditor = null;
-		self.uniqueIDIndex = 0;
-		self.initView();
-	}
-	algoView.prototype = {
+		init: function(element, parser) {
+			var self = this;
+			self.element = element;
+			self.parser = parser;
+			self.mainEditor = null;
+			self.inputEditor = null;
+			self.algoViewEditor = null;
+			self.uniqueIDIndex = 0;
+			self.initView();
+		},
+
 		initView: function() {
 			var self = this;
 			var foldFunc = CodeMirror.newFoldFunction(
@@ -122,6 +242,11 @@ function(tree, traverse, parsejs) {
 				self.processAst(ast),
 				refreshOnlyAlgoView
 			);
+			self.cleanState();
+		},
+
+		cleanState: function() {
+			this.uniqueIDIndex = 0;
 		},
 
 		parseInputArgs: function(userText) {
@@ -170,7 +295,6 @@ function(tree, traverse, parsejs) {
 						outputCode,
 						self.addInitalCall(funcNode, args)
 					].join("\n");
-					self.algoViewEditor.setValue(codeToExecute);
 					data.executionData = self.collectExecutionData(codeToExecute);
 				}
 			}
@@ -190,11 +314,11 @@ function(tree, traverse, parsejs) {
 		},
 
 		collectExecutionData: function(code) {
-			var proxy = new algoViewProxy();
-			(function(algoViewProxy) {
+			var observer = new ExecutionObserver();
+			(function(executionObserver) {
 				eval(code);
-			})(proxy);
-			//return proxy.generateData();
+			})(observer);
+			return observer.generateData();
 		},
 
 		plantMonitors: function(code, funcNode) {
@@ -284,7 +408,7 @@ function(tree, traverse, parsejs) {
 						var varName = algoView.getUniqueIdentifier();
 						return [
 							"var " + varName + " = " + returnValue + ";",
-							"algoViewProxy.trackReturn(" + varName + ");",
+							"executionObserver.trackReturn(" + varName + ");",
 							"return " + varName + ";"
 						].join("\n");
 					}
@@ -307,12 +431,12 @@ function(tree, traverse, parsejs) {
 				monitors.push({
 					line: startLine,
 					insertAt: "previousLine",
-					text: "algoViewProxy.trackStartLoop();"
+					text: "executionObserver.trackStartLoop();"
 				});
 				monitors.push({
 					line: endLine,
 					insertAt: "nextLine",
-					text: "algoViewProxy.trackEndLoop();"
+					text: "executionObserver.trackEndLoop();"
 				});
 			};
 			funcNode.traverseTopDown(
@@ -333,7 +457,7 @@ function(tree, traverse, parsejs) {
 					monitors.push({
 						line: line,
 						insertAt: "nextLine",
-						text: "algoViewProxy.trackVariableAlter('" + varName + "', " + varName + ");"
+						text: "executionObserver.trackVariableAlter('" + varName + "', " + varName + ");"
 					});
 				}
 			};
@@ -353,7 +477,7 @@ function(tree, traverse, parsejs) {
 				monitors.push({
 					line: line,
 					insertAt: "nextLine",
-					text: "algoViewProxy.trackVariableAlter('" + varName + "', " + varName + ");"
+					text: "executionObserver.trackVariableAlter('" + varName + "', " + varName + ");"
 				});
 			};
 			funcNode.traverseTopDown(
@@ -374,7 +498,7 @@ function(tree, traverse, parsejs) {
 					monitors.push({
 						line: line,
 						insertAt: "nextLine",
-						text: "algoViewProxy.trackVariableDeclaration('" + varName + "', " + varName + ");"
+						text: "executionObserver.trackVariableDeclaration('" + varName + "', " + varName + ");"
 					});
 				}
 			};
@@ -448,7 +572,10 @@ function(tree, traverse, parsejs) {
 				}
 				self.inputEditor.setValue(userInputText);
 			}
-			// TODO!
+			var executionData = data.executionData;
+			if (executionData) {
+				self.algoViewEditor.setValue(executionData);
+			}
 		},
 
 		getUserInputEntry: function(name, value, isUserSet) {
@@ -471,9 +598,9 @@ function(tree, traverse, parsejs) {
 				}
 			}
 		}
-	};
+	});
 
 	require.ready(function() {
-		var view = new algoView($("#algoViewContainer")[0], parsejs);
+		var view = new AlgoView($("#algoViewContainer")[0], parsejs);
 	});
 });
