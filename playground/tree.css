@@ -18,7 +18,7 @@ textarea {
 }
 
 .float-wrap {
-	height: 300px;
+	height: 320px;
 }
 
 .float-wrap > div {
@@ -40,11 +40,11 @@ textarea {
 }
 
 .decl {
-	background-color: #E2C7D8;
+	background-color: #E2C7D8 !important;
 }
 
 .declInit {
-	background-color: #D0E4D0;
+	background-color: #D0E4D0 !important;
 }
 
 .loop {

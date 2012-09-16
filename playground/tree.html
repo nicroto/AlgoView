@@ -29,6 +29,8 @@
 	var high = array.length - 1;
 	var mid, value;
 
+	for (var i in array) {
+    }
 	for (var i = 0; i < 10; i++) {
 		--mid;
     }
@@ -54,10 +56,12 @@
 		<div class="float-wrap">
 			<div>
 				<button id="runButton">Run</button>
-				<textarea id="analysisEditor">checkQuery(ast, 'VarDecl(_)');
-checkQuery(ast, 'VarDeclInit(_,_)');
+				<textarea id="analysisEditor">checkQuery(ast, 'VarDeclInit(_,_)');
+checkQuery(ast, 'VarDecl(_)');
+checkQuery(ast, 'ForIn(_,_,_)');
+checkQuery(ast, 'For(_,_,_,_)');
 checkQuery(ast, 'While(_,_)');
-checkQuery(ast, 'For(_,_,_,_)');</textarea>
+checkQuery(ast, 'Return(_)');</textarea>
 			</div>
 			<div>
 				<textarea id="output"></textarea>

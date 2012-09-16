@@ -134,12 +134,13 @@ function(tree, traverse, parsejs) {
 					funcNode
 				);
 				data.inputArgs = args;
-				if (self.allArgumentsFilledByUser(args)) {/*
+				if (self.allArgumentsFilledByUser(args)) {
 					var codeToExecute = self.plantMonitors(
 						self.mainEditor.getValue("\n"),
 						funcNode
 					);
-					data.executionData = self.mockAndExecuteClientCode(
+					self.algoViewEditor.setValue(codeToExecute);
+					/*data.executionData = self.collectExecutionData(
 						self.mainEditor,
 						funcNode
 					);*/
@@ -151,36 +152,162 @@ function(tree, traverse, parsejs) {
 		plantMonitors: function(code, funcNode) {
 			var lines = code.split("\n");
 			var self = this;
-			lines = $.map(lines, function(index, line) {
-				return { index: index, text: line, toInsert: [] };
+			lines = $.map(lines, function(line, index) {
+				return { line: index, text: line, monitors: [] };
 			});
-			var monitors = self.getAllVarDecls(funcNode)
-				.concat(self.getAllAssigns(funcNode))
-				.concat(self.getAllLoops(funcNode));
+			var monitors = self.getVarDeclsTracks(funcNode, 'VarDecls(_)');
+				// .concat(self.getVarAlterTracks(funcNode, 'PrefixOp(_,x)'))
+				// .concat(self.getVarAlterTracks(funcNode, 'PostfixOp(_,x)'))
+				// .concat(self.getVarAlterTracks(funcNode, 'Assign(x,_)'));
+				// .concat(self.getLoopTracks(funcNode, 'For(_,_,_,_)'))
+				// .concat(self.getLoopTracks(funcNode, 'While(_,_)'))
+				// .concat(self.getLoopTracks(funcNode, 'ForIn(_,_,_)'))
+				// .concat(self.getReturnTracks(funcNode, 'Return(x)'));
 			for (var i = 0; i < monitors.length; i++) {
 				var entry = monitors[i];
-				lines[entry.index].toInsert.push(entry.text);
+				lines[entry.line].monitors.push(entry);
 			}
 			var newLines = [];
 			for (var i = 0; i < lines.length; i++) {
-				var line = lines[i];
-				newLines.push(line.text);
-				var toInsert = line.toInsert;
-				if (toInsert.length > 0) {
-					for(var j = 0; j < toInsert.length; j++) {
-						newLines.push(toInsert[j].text);
-					}
-				}
+				newLines.push(self.insertMonitors(lines[i]));
 			}
 			return newLines.join("\n");
 		},
 
-		getAllVarDecls: function(funcNode) {
-			
+		insertMonitors: function(line) {
+			var lineText = line.text;
+			var monitors = line.monitors.sort(function(a, b) {
+				return a.ch > b.ch;
+			});
+			var previousLines = [];
+			var nextLines = [];
+			var toInsert = [];
+			for (var i = 0; i < monitors.length; i++) {
+				var monitor = monitors[i];
+				var charIndex = monitor.ch;
+				var monitorText = monitor.text;
+				switch(monitor.insertAt) {
+					case "previousLine":
+						previousLines.push(monitorText);
+						break;
+
+					case "sameLine":
+						toInsert.push({
+							index: charIndex,
+							text: monitorText
+						});
+						break;
+
+					case "nextLine":
+						nextLines.push(monitorText);
+						break;
+				}
+			}
+			var lineParts = [];
+			var currentIndex = 0;
+			for (var i = 0; i < toInsert.length; i++) {
+				var entry = toInsert[i];
+				var skipped = lineText.slice(currentIndex, entry.index);
+				lineParts.push(skipped);
+				lineParts.push(entry.text);
+			}
+			lineParts.push(lineText.slice(currentIndex, lineText.length - currentIndex));
+			return (previousLines
+				.concat([lineParts.join("")])
+				.concat(nextLines))
+					.join("\n");
+		},
+
+		getReturnTracks: function(funcNode, query) {
+			var self = this;
+			var monitors = [];
+			var trackFunc = function(b, node) {
+				var value = b.x.value;
+				var pos = self.getReturnTrackPos(node);
+				monitors.push({
+					line: pos.line,
+					ch: pos.ch,
+					insertAt: "sameLine",
+					text: "algoViewProxy.trackReturn(" + value + ");"
+				});
+			};
+			funcNode.traverseTopDown(
+				query,
+				trackFunc
+			);
+			return monitors;
+		},
+
+		getLoopTracks: function(funcNode, query) {
+			var self = this;
+			var monitors = [];
+			var trackFunc = function(b, node) {
+				var startTrackPos = self.getLoopStartTrackPos(node);
+				var endTrackPos = self.getLoopEndTrackPos(node);
+				monitors.push({
+					line: startTrackLoop.line,
+					ch: startTrackPos.ch,
+					insertAt: "previousLine",
+					text: "algoViewProxy.startTrackLoop();"
+				});
+				monitors.push({
+					line: endTrackPos.line,
+					ch: endTrackPos.ch,
+					insertAt: "nextLine",
+					text: "algoViewProxy.endTrackLoop();"
+				});
+			};
+			funcNode.traverseTopDown(
+				query,
+				trackFunc
+			);
+			return monitors;
+		},
+
+		getVarAlterTracks: function(funcNode, query) {
+			var self = this;
+			var monitors = [];
+			var trackFunc = function(b, node) {
+				var varName = b.x.value;
+				var pos = self.getVarTrackPos(node);
+				monitors.push({
+					line: pos.line,
+					ch: pos.ch,
+					insertAt: "nextLine",
+					text: "algoViewProxy.trackVariableAlter('" + varName + "', " + varName + ");"
+				});
+			};
+			funcNode.traverseTopDown(
+				query,
+				trackFunc
+			);
+			return monitors;
+		},
+
+		getVarDeclsTracks: function(funcNode, query) {
+			var self = this;
+			var monitors = [];
+			var trackFunc = function(b, node) {
+				var line = node.getPos().el;
+				var decls = node[0];
+				for (var i = 0; i < decls.length; i++) {
+					var varName = decls[i][0].value;
+					monitors.push({
+						line: line,
+						insertAt: "nextLine",
+						text: "algoViewProxy.trackVariableDeclaration('" + varName + "', " + varName + ");"
+					});
+				}
+			};
+			funcNode.traverseTopDown(
+				query,
+				trackFunc
+			);
+			return monitors;
 		},
 
 		allArgumentsFilledByUser: function(args) {
-			for (var i; i < args.length; i++) {
+			for (var i = 0; i < args.length; i++) {
 				if (!args[i].isUserSet) {
 					return false;
 				}
