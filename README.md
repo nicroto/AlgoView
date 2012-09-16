@@ -1,6 +1,7 @@
 ### What is AlgoView?
 AlgoView is a tool for visualization of intermediate data of algorithm during it's execution.
 It's inspired by the demo that Bret Victor has shown earlier this year on the CUSEC 2012 conference in the famous lecture "Inventing on Principle".
+The idea is to be able to immediatelly see how your code executes while you write it, catching errors and bugs early on in the implementation phase.
 ### For what language is AlgoView written for?
 Currently my sample is implemented for JavaScript (on JavaScript as well).
 ### Can one use AlgoView as a component (to integrate it inside his/her projects)?
