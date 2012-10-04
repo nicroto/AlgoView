@@ -20,7 +20,6 @@ textarea {
 .float-wrap {
 	height: 480px;
 }
-
 .float-wrap > div {
 	position: relative;
 	height: 100%;
@@ -29,21 +28,15 @@ textarea {
 	border: solid 1px;
 }
 
+.sample-input-editor {
+	height: 52px;
+}
+.algo-view {
+	height: 428px;
+}
+
 #clearButton {
 	position: absolute;
 	right: 17px;
 	z-index: 1;
-}
-
-.sample-input-editor {
-	height: 52px;
-}
-.has-input>.sample-input-editor {
-	display: block;
-}
-.algo-view {
-	height: 100%;
-}
-.has-input>.algo-view {
-	height: 428px;
 }
